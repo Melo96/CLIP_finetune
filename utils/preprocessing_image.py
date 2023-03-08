@@ -10,42 +10,22 @@ import collections
 import pickle
 import re
 
-import pdb
-
-def load_and_save(file_id, query, img_url, save_path_final, 
-                  user_agent='Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
-                  ):
-    # filter variables in the URL to get the original image
-    parsed_url = re.search(r'(.*\.(jpg|JPG|png|PNG|svg|npj|webp|gif))(.*)', img_url)
-    img_url = parsed_url.group(1) if parsed_url else img_url
-    surfix = img_url.split(".")[-1]
-
-    try:
-        response = requests.get(img_url, headers={"User-Agent": user_agent}, timeout=10, stream=True)
-    except:
-        return 'url request error', file_id
-        
-    if response.status_code==200:
-        # convert ".svg" to ".png"
-        if surfix=='svg':
-            try:
-                img = svg2png(bytestring=BytesIO(response.content).read())
-            except:
-                return 'img loading error', file_id
-        else:
-            try:
-                img = BytesIO(response.content).getvalue()
-            except:
-                return 'img loading error', file_id
-    else:
-        return response.status_code, file_id
-
-    to_save = {'id': file_id, 'query': query, 'image': img}
-    with open(save_path_final / f'{file_id}.pkl', 'wb') as f:
-        pickle.dump(to_save, f)
-    return 'success', file_id
 
 def preprocess_image(df, save_path, overwrite=False, divide_factor=1000):
+    """
+    Steps for image preprocessing:
+        - Create a multiprocessing session (maximum 4 workers) to accelerate the process.
+        - Define user agents. 
+        - For every image URL, remove all text after image file extension to get the original image.
+        - Request the image and save it as bytearray in a pickle file. 
+
+    Args:
+        df (DataFrame): data to be processed. 
+        save_path (Path): path to save the processed data.
+        overwrite (bool, optional): whether to overwrite existing files. Defaults to False.
+        divide_factor (int, optional): create and save data to new folder for every {divide_factor} of images.
+                                        Defaults to 1000.
+    """
     workers = min(4, os.cpu_count() // 2)
     print(f"Number of workers: {workers}")
 
@@ -100,3 +80,38 @@ def preprocess_image(df, save_path, overwrite=False, divide_factor=1000):
         
     with open(save_path / 'status_code_count.json', 'w') as f:
         json.dump(status_code_count, f)
+
+
+def load_and_save(file_id, query, img_url, save_path_final, 
+                  user_agent='Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'
+                  ):
+    # filter variables in the URL to get the original image
+    parsed_url = re.search(r'(.*\.(jpg|JPG|png|PNG|svg|npj|webp|gif))(.*)', img_url)
+    img_url = parsed_url.group(1) if parsed_url else img_url
+    surfix = img_url.split(".")[-1]
+
+    try:
+        response = requests.get(img_url, headers={"User-Agent": user_agent}, timeout=10, stream=True)
+    except:
+        return 'url request error', file_id
+        
+    if response.status_code==200:
+        # convert ".svg" to ".png"
+        if surfix=='svg':
+            try:
+                img = svg2png(bytestring=BytesIO(response.content).read())
+            except:
+                return 'img loading error', file_id
+        else:
+            try:
+                img = BytesIO(response.content).getvalue()
+            except:
+                return 'img loading error', file_id
+    else:
+        return response.status_code, file_id
+
+    to_save = {'id': file_id, 'query': query, 'image': img}
+    with open(save_path_final / f'{file_id}.pkl', 'wb') as f:
+        pickle.dump(to_save, f)
+    return 'success', file_id
+

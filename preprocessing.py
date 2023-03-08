@@ -8,7 +8,18 @@ from PIL import Image
 from utils.preprocessing_image import preprocess_image
 
 
+
 def main():
+    """
+    Steps of preprocessing:
+        1. Load "train.feather".
+        2. To fine-tune CLIP, we need to create image-text pairs, where the text captions is something related to the image (our "query"). So, only data with "is_relevant=1" is kept in training and validation. 
+        3. Download image from image source URLs. Save them as bytearray in a pickle file. 
+        4. Save processed data as ".feather".
+
+    Args:
+        data_path (Path): path to data to be processed.
+    """
     data_path = Path('/data/kaiwen/ahrefs/dataset')
     relevant_columns = ['id', 'query', 'url_page', 'src', 'title', 'alt', 'is_relevant'] # columns to keep for fine-tuning
     df = feather.read_feather(data_path / 'train.feather').filter(items=relevant_columns)
