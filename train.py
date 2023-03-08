@@ -107,16 +107,16 @@ def main(data_path, model_save_name, pretrained_name='openai/clip-vit-base-patch
 
     BATCH_SIZE = batch_size
 
-    total_df = feather.read_feather(data_path / 'train_final_df.feather')
-    query2label = {q: l for l, q in enumerate(total_df['query'].unique())}
-    train, valid, train_labels, val_labels = get_train_test_split(total_df, query2label)
+    total_df = feather.read_feather(data_path / 'train_final_df.feather') # read preprocessed data
+    query2label = {q: l for l, q in enumerate(total_df['query'].unique())} # create map for query to label
+    train, valid, train_labels, val_labels = get_train_test_split(total_df, query2label) # split train and validation set
 
-    model = CLIPModel.from_pretrained(pretrained_name)
+    model = CLIPModel.from_pretrained(pretrained_name) # load pretrained model
     model.to(device)
-    processor = CLIPProcessor.from_pretrained(pretrained_name)
+    processor = CLIPProcessor.from_pretrained(pretrained_name) # load model processor that help us prepare the data input
 
     train_dataset = MyDataSet(train, processor, query2label)
-    train_sampler = BalancedBatchSampler(torch.tensor(train_labels), BATCH_SIZE, 1)
+    train_sampler = BalancedBatchSampler(torch.tensor(train_labels), BATCH_SIZE, 1) # create balanced batch
     train_dataloader = DataLoader(train_dataset, batch_sampler=train_sampler)
     
     val_dataset = MyDataSet(valid, processor, query2label)
