@@ -1,0 +1,5 @@
+datasets==1.15.1
+transformers==4.26.0
+Pillow
+pyarrow
+cairosvg
