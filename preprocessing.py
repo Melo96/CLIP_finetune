@@ -5,11 +5,21 @@ from tqdm import tqdm, trange
 import pandas as pd
 import pickle
 from PIL import Image
+import argparse
 from utils.preprocessing_image import preprocess_image
 
 
+def get_args_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_path",
+                        required=True,
+                        type=str,
+                        help='Path to data to be processed.'
+                        )
+    args = parser.parse_args()
+    return args
 
-def main():
+def main(data_path):
     """
     Steps of preprocessing:
         1. Load "train.feather".
@@ -20,7 +30,6 @@ def main():
     Args:
         data_path (Path): path to data to be processed.
     """
-    data_path = Path('/data/kaiwen/ahrefs/dataset')
     relevant_columns = ['id', 'query', 'url_page', 'src', 'title', 'alt', 'is_relevant'] # columns to keep for fine-tuning
     df = feather.read_feather(data_path / 'train.feather').filter(items=relevant_columns)
 
@@ -58,4 +67,7 @@ def main():
     df_save.to_feather(data_path / "train_final_df.feather")
         
 if __name__=="__main__":
-    main()
+    args = get_args_parser()
+    data_path = args.data_path
+    # data_path = Path('/data/kaiwen/ahrefs/dataset')
+    main(data_path)
