@@ -47,14 +47,12 @@ def preprocess_image(df, save_path, overwrite=False, divide_factor=1000):
             file_id = df['id'][row_id]
             query = df['query'][row_id]
             img_url = df['src'][row_id]
-            is_relevant = df['is_relevant'][row_id]
             
             if not overwrite and (save_path_final / f'{file_id}.pkl').is_file():
                 continue
             
-            if is_relevant==1:
-                job = pool.apply_async(load_and_save, args=(file_id, query, img_url, save_path_final))
-                jobs.append(job)
+            job = pool.apply_async(load_and_save, args=(file_id, query, img_url, save_path_final))
+            jobs.append(job)
 
         for job in tqdm(jobs):
             error_type, file_id = job.get()

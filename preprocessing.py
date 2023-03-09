@@ -16,10 +16,16 @@ def get_args_parser():
                         type=str,
                         help='Path to data to be processed.'
                         )
+    parser.add_argument("--file_name",
+                        required=False,
+                        type=str,
+                        help='Name of the data (train or test). Default train',
+                        default='train'
+                        )
     args = parser.parse_args()
     return args
 
-def main(data_path):
+def main(data_path, file_name='train'):
     """
     Steps of preprocessing:
         1. Load "train.feather".
@@ -31,16 +37,19 @@ def main(data_path):
         data_path (Path): path to data to be processed.
     """
     relevant_columns = ['id', 'query', 'url_page', 'src', 'title', 'alt', 'is_relevant'] # columns to keep for fine-tuning
-    df = feather.read_feather(data_path / 'train.feather').filter(items=relevant_columns)
+    df = feather.read_feather(data_path / f'{file_name}.feather').filter(items=relevant_columns)
 
-    relevant_df = df.loc[df['is_relevant']==1].reset_index(drop=True)
+    if file_name=="train":
+        relevant_df = df.loc[df['is_relevant']==1].reset_index(drop=True)
+    else:
+        relevant_df = df
 
     failed = []
     df_save = []
     # some images are blank, which will cause error
     corrupted = ['af408364133664b68836a9a474717ce5', 'dbccc72ea88ef231a123ce9c08745244']
 
-    save_path = data_path / "train_data"
+    save_path = data_path / f"{file_name}_data"
     save_path.mkdir(exist_ok=True, parents=True)
 
     preprocess_image(relevant_df, save_path)
@@ -64,10 +73,12 @@ def main(data_path):
     
     df_save = pd.DataFrame(df_save).reset_index(drop=True)
     print(len(df_save))
-    df_save.to_feather(data_path / "train_final_df.feather")
-        
+    df_save.to_feather(data_path / f"{file_name}_final_df.feather")
+
 if __name__=="__main__":
-    args = get_args_parser()
-    data_path = args.data_path
-    # data_path = Path('/data/kaiwen/ahrefs/dataset')
-    main(data_path)
+    # args = get_args_parser()
+    # data_path = args.data_path
+    # file_name = args.file_name
+    data_path = Path('/data/kaiwen/datasets/ahrefs/dataset')
+    file_name = 'test'
+    main(data_path, file_name)
