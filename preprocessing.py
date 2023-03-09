@@ -22,10 +22,28 @@ def get_args_parser():
                         help='Name of the data (train or test). Default train',
                         default='train'
                         )
+    parser.add_argument("--overwrite",
+                        required=False,
+                        type=bool,
+                        help='Whether to overwrite existing data.',
+                        default=False
+                        )
+    parser.add_argument("--divide_factor",
+                        required=False,
+                        type=int,
+                        help='Create and save data to new folder for every {divide_factor} of images. Defaults to 1000',
+                        default=1000
+                        )
+    parser.add_argument("--max_workers",
+                        required=False,
+                        type=int,
+                        help='Maximum number of workers in multi-processing. Defaults to 4',
+                        default=4
+                        )
     args = parser.parse_args()
     return args
 
-def main(data_path, file_name='train'):
+def main(data_path, file_name='train', overwrite=False, divide_factor=1000, max_workers=4):
     """
     Steps of preprocessing:
         1. Load "train.feather".
@@ -52,13 +70,13 @@ def main(data_path, file_name='train'):
     save_path = data_path / f"{file_name}_data"
     save_path.mkdir(exist_ok=True, parents=True)
 
-    preprocess_image(relevant_df, save_path)
+    # preprocess_image(relevant_df, save_path, overwrite, divide_factor, max_workers)
 
     for i in trange(len(relevant_df)):
         file_id = relevant_df['id'][i]
         query = relevant_df['query'][i]
-        folder_num = i // 1000
-        save_path_final = save_path / f'{(folder_num+1)*1000}/{file_id}.pkl'
+        folder_num = i // divide_factor
+        save_path_final = save_path / f'{(folder_num+1)*divide_factor}/{file_id}.pkl'
         if save_path_final.is_file() and file_id not in corrupted:
             with open(save_path_final, 'rb') as f:
                 img = pickle.load(f)['image']
@@ -76,9 +94,15 @@ def main(data_path, file_name='train'):
     df_save.to_feather(data_path / f"{file_name}_final_df.feather")
 
 if __name__=="__main__":
-    # args = get_args_parser()
-    # data_path = args.data_path
-    # file_name = args.file_name
-    data_path = Path('/data/kaiwen/datasets/ahrefs/dataset')
-    file_name = 'test'
-    main(data_path, file_name)
+    args = get_args_parser()
+    data_path = args.data_path
+    file_name = args.file_name
+    overwrite = args.overwrite
+    divide_factor = args.divide_factor
+    max_workers = args.max_workers
+    # data_path = Path('/Users/yangkaiwen/Documents/data/ahrefs interview/dataset')
+    # file_name = 'train'
+    # overwrite = False
+    # divide_factor = 1000
+    # max_workers = 6
+    main(data_path, file_name, overwrite, divide_factor, max_workers)

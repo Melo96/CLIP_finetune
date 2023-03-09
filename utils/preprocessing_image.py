@@ -11,7 +11,7 @@ import pickle
 import re
 
 
-def preprocess_image(df, save_path, overwrite=False, divide_factor=1000):
+def preprocess_image(df, save_path, overwrite=False, divide_factor=1000, max_workers=4):
     """
     Steps for image preprocessing:
         - Create a multiprocessing session (maximum 4 workers) to accelerate the process.
@@ -26,7 +26,7 @@ def preprocess_image(df, save_path, overwrite=False, divide_factor=1000):
         divide_factor (int, optional): create and save data to new folder for every {divide_factor} of images.
                                         Defaults to 1000.
     """
-    workers = min(4, os.cpu_count() // 2)
+    workers = min(max_workers, os.cpu_count() // 2)
     print(f"Number of workers: {workers}")
 
     overwrite = False # whether to overwrite existing data
@@ -66,7 +66,7 @@ def preprocess_image(df, save_path, overwrite=False, divide_factor=1000):
     print("Number of URL requesting errors:", len(url_load_failed))
     print("Number of image loading error:", len(img_load_failed))
     print("Number of website response errors:", len(dict(status_code_count).values))
-    total_error = len(url_load_failed) + len(img_load_failed) + len(dict(status_code_count).values)
+    total_error = len(url_load_failed) + len(img_load_failed) + len(dict(status_code_count).values())
     print("Total number of error:", total_error)
     print("Total number of success:", len(df)-total_error)
 
