@@ -57,12 +57,11 @@ def finetune(model, train_dataloader, val_dataloader, trainer, model_save_name):
     optimizer = optim.AdamW(model.parameters(), lr=lr, 
                         #   weight_decay=weight_decay
                             )
-    # lr_scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=0.5, total_iters=5)
-    # lambda1 = lambda epoch: 0.9
-    # lr_scheduler = optim.lr_scheduler.MultiplicativeLR(optimizer, lr_lambda=lambda1)
+    lr_scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=1, end_factor=0.5, total_iters=5)
+
     min_loss = math.inf
     for epoch in trange(epoch_num):
-        outputs, train_loss = trainer.train(train_dataloader, model, optimizer)
+        outputs, train_loss = trainer.train(train_dataloader, model, optimizer, lr_scheduler)
         val_loss = trainer.eval(val_dataloader, model)
         # torch.save(model.state_dict(), MODEL_PATH)
         if val_loss <= min_loss:
@@ -82,7 +81,7 @@ def finetune(model, train_dataloader, val_dataloader, trainer, model_save_name):
     
 def get_train_test_split(df, query2label):
     index = [i for i in range(len(df))]
-    labels = [query2label[df['query'][i]] for i in range(len(df))]
+    labels = [query2label["a picture relevant to " + df['query'][i]] for i in range(len(df))]
     
     train_index, val_index, train_labels, val_labels = train_test_split(index, labels, test_size=0.1, random_state=random_state, shuffle=True)
     
@@ -105,10 +104,11 @@ def main(data_path, model_save_name, pretrained_name='openai/clip-vit-base-patch
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
 
+    torch.manual_seed(random_state)
     BATCH_SIZE = batch_size
 
     total_df = feather.read_feather(data_path / 'train_final_df.feather') # read preprocessed data
-    query2label = {q: l for l, q in enumerate(total_df['query'].unique())} # create map for query to label
+    query2label = {"a picture relevant to " + q: l for l, q in enumerate(total_df['query'].unique())} # create map for query to label
     train, valid, train_labels, val_labels = get_train_test_split(total_df, query2label) # split train and validation set
 
     model = CLIPModel.from_pretrained(pretrained_name) # load pretrained model
@@ -133,7 +133,8 @@ if __name__=="__main__":
     model_save_name = args.model_save_name
     pretrained_name = args.pretrained_name
     batch_size = args.batch_size
-    # data_path = Path('/data/kaiwen/ahrefs/dataset')
+    # data_path = Path('/data/kw/data/ahrefs')
     # model_save_name = "clip_test"
     # pretrained_name = 'openai/clip-vit-base-patch32'
+    # batch_size = 16
     main(data_path, model_save_name, pretrained_name, batch_size)
