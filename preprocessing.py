@@ -6,6 +6,7 @@ import pandas as pd
 import pickle
 from PIL import Image
 import argparse
+import json
 from utils.preprocessing_image import preprocess_image
 
 
@@ -70,7 +71,7 @@ def main(data_path, file_name='train', overwrite=False, divide_factor=1000, max_
     save_path = data_path / f"{file_name}_data"
     save_path.mkdir(exist_ok=True, parents=True)
 
-    # preprocess_image(relevant_df, save_path, overwrite, divide_factor, max_workers)
+    preprocess_image(relevant_df, save_path, overwrite, divide_factor, max_workers)
 
     for i in trange(len(relevant_df)):
         file_id = relevant_df['id'][i]
@@ -91,7 +92,10 @@ def main(data_path, file_name='train', overwrite=False, divide_factor=1000, max_
     
     df_save = pd.DataFrame(df_save).reset_index(drop=True)
     print(len(df_save))
+    print(len(failed))
     df_save.to_feather(data_path / f"{file_name}_final_df.feather")
+    with open(data_path / f"{file_name}_failed.json", "w") as f:
+        json.dump(failed, f)
 
 if __name__=="__main__":
     args = get_args_parser()
@@ -101,8 +105,8 @@ if __name__=="__main__":
     divide_factor = args.divide_factor
     max_workers = args.max_workers
     # data_path = Path('/Users/yangkaiwen/Documents/data/ahrefs interview/dataset')
-    # file_name = 'train'
+    # file_name = 'test'
     # overwrite = False
     # divide_factor = 1000
-    # max_workers = 6
+    # max_workers = 4
     main(data_path, file_name, overwrite, divide_factor, max_workers)

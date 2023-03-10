@@ -63,7 +63,7 @@ class MyDataSet(Dataset):
     def __getitem__(self, idx):
         item = self.df.iloc[idx,:].to_dict()
         file_id = item["id"]
-        query = item["query"]
+        query = query = "a picture relevant to " + item["query"]
         img_path = item["img_path"]
         
         with open(img_path, 'rb') as f:
