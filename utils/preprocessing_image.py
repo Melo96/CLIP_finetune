@@ -65,7 +65,7 @@ def preprocess_image(df, save_path, overwrite=False, divide_factor=1000, max_wor
 
     print("Number of URL requesting errors:", len(url_load_failed))
     print("Number of image loading error:", len(img_load_failed))
-    print("Number of website response errors:", len(dict(status_code_count).values))
+    print("Number of website response errors:", len(dict(status_code_count).values()))
     total_error = len(url_load_failed) + len(img_load_failed) + len(dict(status_code_count).values())
     print("Total number of error:", total_error)
     print("Total number of success:", len(df)-total_error)
@@ -77,7 +77,7 @@ def preprocess_image(df, save_path, overwrite=False, divide_factor=1000, max_wor
         json.dump(img_load_failed, f)
         
     with open(save_path / 'status_code_count.json', 'w') as f:
-        json.dump(status_code_count, f)
+        json.dump(dict(status_code_count), f)
 
 
 def load_and_save(file_id, query, img_url, save_path_final, 
